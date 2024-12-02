@@ -1,99 +1,69 @@
 package ru.ushakov.beansprofile.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.ushakov.beansprofile.controller.RegisterRequest
-import ru.ushakov.beansprofile.domain.BaristaProfile
-import ru.ushakov.beansprofile.domain.GuestProfile
-import ru.ushakov.beansprofile.domain.TransactionOutbox
+import ru.ushakov.beansprofile.domain.Profile
+import ru.ushakov.beansprofile.domain.Role
+import ru.ushakov.beansprofile.domain.UserIdentity
 import ru.ushakov.beansprofile.kafka.ProfileEventProducer
 import ru.ushakov.beansprofile.repository.*
 
 @Service
 class ProfileService(
-    private val guestRepo: GuestProfileRepository,
-    private val baristaRepo: BaristaProfileRepository,
-    private val outboxRepo: TransactionOutboxRepository,
+    private val profileRepository: ProfileRepository,
     private val profileEventProducer: ProfileEventProducer,
-    private val objectMapper: ObjectMapper,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
+    @Value("\${barista.registration.key}")
+    private val baristaRegistrationKey: String
 ) {
 
     @Transactional
-    fun registerGuest(request: RegisterRequest): Long {
-        require(!guestRepo.existsByEmail(request.email)) { "Email already in use" }
+    fun register(request: RegisterRequest): Long {
+        check(!(request.role == Role.BARISTA && baristaRegistrationKey != request.baristaSecretKey))
+        { "User does not have permission to register as barista" }
+        require(!profileRepository.existsByEmail(request.email))
+        { "Email already in use" }
 
-        val guest = guestRepo.save(
-            GuestProfile(
+        val profile = profileRepository.save(
+            Profile(
                 email = request.email,
                 passwordHash = passwordEncoder.encode(request.password),
                 firstName = request.firstName,
                 lastName = request.lastName,
-                dateOfBirth = request.dateOfBirth
+                dateOfBirth = request.dateOfBirth,
+                role = request.role
             )
         )
 
-        val eventPayload = objectMapper.writeValueAsString(guest)
-        outboxRepo.save(
-            TransactionOutbox(
-                eventKey = guest.id.toString(),
-                eventType = "UserCreated",
-                payload = eventPayload
-            )
-        )
-
-        profileEventProducer.sendGuestProfileCreatedEvent(guest.id)
-        profileEventProducer.sendLoyaltyCabinetCreationRequiredEvent(guest.id)
-        return guest.id
-    }
-
-    fun registerBarista(request: RegisterRequest): Long {
-        require(!baristaRepo.existsByEmail(request.email)) { "Email already in use" }
-
-        val barista = baristaRepo.save(
-            BaristaProfile(
-                email = request.email,
-                passwordHash = passwordEncoder.encode(request.password),
-                firstName = request.firstName,
-                lastName = request.lastName,
-                dateOfBirth = request.dateOfBirth
-            )
-        )
-        return barista.id
+        if (profile.role == Role.GUEST) {
+            profileEventProducer.sendProfileCreatedEvent(profile)
+        }
+        return profile.id
     }
 
     fun getUserIdentityByEmail(email: String): UserIdentity {
-        val guest = guestRepo.findByEmail(email)
-        val barista = baristaRepo.findByEmail(email)
+        val profile = profileRepository.findByEmail(email)
         return when {
-            guest != null -> UserIdentity(guest.id, Role.GUEST)
-            barista != null -> UserIdentity(barista.id, Role.BARISTA)
+            profile != null -> UserIdentity(profile.id, profile.role)
             else -> throw IllegalArgumentException("User not found")
         }
     }
 
     @Transactional
-    fun attachToCoffeeShop(userId: Long, coffeeShopId: Int): Boolean {
+    fun attachToCoffeeShop(userId: Long, coffeeShopId: String): Boolean {
         val authentication = SecurityContextHolder.getContext().authentication
         val currentEmail = authentication.name
-        val guest = guestRepo.findByEmail(currentEmail)
+        val profile = profileRepository.findByEmail(currentEmail)
             ?: throw Exception("Authenticated user not found")
-        require(guest.id == userId) { "You are not authorized to modify this user" }
-        guest.coffeeShopId = coffeeShopId
-        guestRepo.save(guest)
+        require(profile.id == userId) { "You are not authorized to modify this user" }
+        profile.coffeeShopId = coffeeShopId
+        profileRepository.save(profile)
 
         return true
     }
-}
-
-data class UserIdentity(
-    val userId: Long,
-    val role: Role
-)
-
-enum class Role {
-    GUEST, BARISTA
 }

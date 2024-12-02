@@ -20,8 +20,7 @@ class SecurityConfig(
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(
-                        "/profile/guest",
-                        "/profile/barista",
+                        "/profile",
                         "/auth/login"
                     )
                     .permitAll()

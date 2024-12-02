@@ -4,8 +4,7 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.stereotype.Service
-import ru.ushakov.beansprofile.repository.BaristaProfileRepository
-import ru.ushakov.beansprofile.repository.GuestProfileRepository
+import ru.ushakov.beansprofile.repository.ProfileRepository
 
 class CustomUserDetails(
     private val email: String,
@@ -29,16 +28,13 @@ class CustomUserDetails(
 
 @Service
 class CustomUserDetailsService(
-    private val guestRepo: GuestProfileRepository,
-    private val baristaRepo: BaristaProfileRepository
+    private val profileRepository: ProfileRepository
 ) : UserDetailsService {
 
     override fun loadUserByUsername(username: String): UserDetails {
-        val guest = guestRepo.findByEmail(username)
-        val barista = baristaRepo.findByEmail(username)
+        val profile = profileRepository.findByEmail(username)
         return when {
-            guest != null -> CustomUserDetails(guest.email, guest.passwordHash)
-            barista != null -> CustomUserDetails(barista.email, barista.passwordHash)
+            profile != null -> CustomUserDetails(profile.email, profile.passwordHash)
             else -> throw IllegalArgumentException("User not found")
         }
     }
