@@ -10,13 +10,15 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import ru.ushakov.beansprofile.auth.CustomUserDetailsService
 import ru.ushakov.beansprofile.auth.JwtUtil
+import ru.ushakov.beansprofile.service.ProfileService
 
 @RestController
 @RequestMapping("/auth")
 class AuthController(
     private val authenticationManager: AuthenticationManager,
     private val jwtUtil: JwtUtil,
-    private val userDetailsService: CustomUserDetailsService
+    private val userDetailsService: CustomUserDetailsService,
+    private val profileService: ProfileService
 ) {
 
     @PostMapping("/login")
@@ -25,7 +27,8 @@ class AuthController(
         authenticationManager.authenticate(authenticationToken)
 
         val userDetails: UserDetails = userDetailsService.loadUserByUsername(request.email)
-        val token = jwtUtil.generateToken(userDetails.username)
+        val userIdentity = profileService.getUserIdentityByEmail(request.email)
+        val token = jwtUtil.generateToken(userIdentity.userId, userDetails.username, userIdentity.role)
 
         return ResponseEntity.ok(mapOf("jwtToken" to token))
     }

@@ -3,19 +3,30 @@ package ru.ushakov.beansprofile.auth
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import ru.ushakov.beansprofile.service.Role
 import java.util.*
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
 
 @Component
-class JwtUtil {
+class JwtUtil(
+    @Value("\${jwt.secret-key}")
+    private val secretKeyParam: String
+) {
 
-    private val secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256)
+    private val secretKey: SecretKey by lazy {
+        SecretKeySpec(secretKeyParam.toByteArray(), SignatureAlgorithm.HS256.jcaName)
+    }
 
-    fun generateToken(username: String): String {
+    fun generateToken(userId: Long, email: String, role: Role): String {
         return Jwts.builder()
-            .setSubject(username)
+            .setSubject(email)
             .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + 1000 * 60 * 60))
+            .claim("userId", userId)
+            .claim("role", role.name)
             .signWith(secretKey)
             .compact()
     }

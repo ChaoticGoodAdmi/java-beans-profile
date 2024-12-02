@@ -37,7 +37,13 @@ class ProfileService(
         )
 
         val eventPayload = objectMapper.writeValueAsString(guest)
-        outboxRepo.save(TransactionOutbox(eventKey = guest.id.toString(), eventType = "UserCreated", payload = eventPayload))
+        outboxRepo.save(
+            TransactionOutbox(
+                eventKey = guest.id.toString(),
+                eventType = "UserCreated",
+                payload = eventPayload
+            )
+        )
 
         profileEventProducer.sendGuestProfileCreatedEvent(guest.id)
         profileEventProducer.sendLoyaltyCabinetCreationRequiredEvent(guest.id)
@@ -59,6 +65,16 @@ class ProfileService(
         return barista.id
     }
 
+    fun getUserIdentityByEmail(email: String): UserIdentity {
+        val guest = guestRepo.findByEmail(email)
+        val barista = baristaRepo.findByEmail(email)
+        return when {
+            guest != null -> UserIdentity(guest.id, Role.GUEST)
+            barista != null -> UserIdentity(barista.id, Role.BARISTA)
+            else -> throw IllegalArgumentException("User not found")
+        }
+    }
+
     @Transactional
     fun attachToCoffeeShop(userId: Long, coffeeShopId: Int): Boolean {
         val authentication = SecurityContextHolder.getContext().authentication
@@ -71,4 +87,13 @@ class ProfileService(
 
         return true
     }
+}
+
+data class UserIdentity(
+    val userId: Long,
+    val role: Role
+)
+
+enum class Role {
+    GUEST, BARISTA
 }
