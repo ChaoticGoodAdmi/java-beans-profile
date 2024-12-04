@@ -51,6 +51,8 @@ data class RegisterRequest(
     @field:Past(message = "Date of birth must be in the past")
     val dateOfBirth: LocalDate,
 
+    var coffeeShopId: String?,
+
     val role: Role = Role.GUEST,
 
     val baristaSecretKey: String?

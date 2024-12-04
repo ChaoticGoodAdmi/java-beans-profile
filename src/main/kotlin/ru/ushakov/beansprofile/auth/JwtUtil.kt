@@ -19,13 +19,14 @@ class JwtUtil(
         SecretKeySpec(secretKeyParam.toByteArray(), SignatureAlgorithm.HS256.jcaName)
     }
 
-    fun generateToken(userId: Long, email: String, role: Role): String {
+    fun generateToken(userId: Long, email: String, role: Role, coffeeShopId: String?): String {
         return Jwts.builder()
             .setSubject(email)
             .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + 1000 * 60 * 60))
             .claim("userId", userId)
             .claim("role", role.name)
+            .claim("coffeeShopId", coffeeShopId)
             .signWith(secretKey)
             .compact()
     }

@@ -25,5 +25,6 @@ enum class Role {
 
 data class UserIdentity(
     val userId: Long,
-    val role: Role
+    val role: Role,
+    val coffeeShopId: String?
 )

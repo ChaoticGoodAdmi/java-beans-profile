@@ -49,7 +49,7 @@ class ProfileService(
     fun getUserIdentityByEmail(email: String): UserIdentity {
         val profile = profileRepository.findByEmail(email)
         return when {
-            profile != null -> UserIdentity(profile.id, profile.role)
+            profile != null -> UserIdentity(profile.id, profile.role, profile.coffeeShopId)
             else -> throw IllegalArgumentException("User not found")
         }
     }

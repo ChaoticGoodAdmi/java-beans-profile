@@ -28,7 +28,7 @@ class AuthController(
 
         val userDetails: UserDetails = userDetailsService.loadUserByUsername(request.email)
         val userIdentity = profileService.getUserIdentityByEmail(request.email)
-        val token = jwtUtil.generateToken(userIdentity.userId, userDetails.username, userIdentity.role)
+        val token = jwtUtil.generateToken(userIdentity.userId, userDetails.username, userIdentity.role, userIdentity.coffeeShopId)
 
         return ResponseEntity.ok(mapOf("jwtToken" to token))
     }
