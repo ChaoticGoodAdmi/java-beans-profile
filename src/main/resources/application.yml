@@ -27,10 +27,13 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
+
 jwt:
   secret-key: ${JWT_SECRET_KEY:default-secret-key}
+
 barista:
   registration:
     key: ${BARISTA_REGISTRATION_KEY:default-registration-key}
+
 server:
   port: 8001
