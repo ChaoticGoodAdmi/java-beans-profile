@@ -36,7 +36,8 @@ class ProfileService(
                 firstName = request.firstName,
                 lastName = request.lastName,
                 dateOfBirth = request.dateOfBirth,
-                role = request.role
+                role = request.role,
+                coffeeShopId = request.coffeeShopId
             )
         )
 
@@ -57,7 +58,8 @@ class ProfileService(
     @Transactional
     fun attachToCoffeeShop(userId: Long, coffeeShopId: String): Boolean {
         val authentication = SecurityContextHolder.getContext().authentication
-        val currentEmail = authentication.name
+        val cu
+        rrentEmail = authentication.name
         val profile = profileRepository.findByEmail(currentEmail)
             ?: throw Exception("Authenticated user not found")
         require(profile.id == userId) { "You are not authorized to modify this user" }

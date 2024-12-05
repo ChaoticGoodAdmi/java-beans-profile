@@ -21,9 +21,9 @@ class ProfileController(private val profileService: ProfileService) {
         return ResponseEntity.ok(mapOf("userId" to userId))
     }
 
-    @PutMapping("/{userId}")
+    @PutMapping
     fun attachToCoffeeShop(
-        @PathVariable userId: Long,
+        @RequestHeader(name = "X-UserId", required = true) userId: Long,
         @RequestParam coffeeShopId: String
     ): ResponseEntity<Map<String, String>> {
         return if (profileService.attachToCoffeeShop(userId, coffeeShopId)) {
