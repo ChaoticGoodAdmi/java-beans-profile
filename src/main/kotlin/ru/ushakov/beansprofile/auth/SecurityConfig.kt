@@ -21,7 +21,8 @@ class SecurityConfig(
                 auth
                     .requestMatchers(
                         "/profile",
-                        "/auth/login"
+                        "/auth/login",
+                        "/actuator/**"
                     )
                     .permitAll()
                     .anyRequest()
