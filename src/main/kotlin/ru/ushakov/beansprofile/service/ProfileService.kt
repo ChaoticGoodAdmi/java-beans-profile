@@ -56,7 +56,7 @@ class ProfileService(
     }
 
     @Transactional
-    fun attachToCoffeeShop(userId: Long, coffeeShopId: String): Boolean {
+    fun attachToCoffeeShop(userId: Long, coffeeShopId: String): Pair<String, UserIdentity> {
         val authentication = SecurityContextHolder.getContext().authentication
         val currentEmail = authentication.name
         val profile = profileRepository.findByEmail(currentEmail)
@@ -65,6 +65,6 @@ class ProfileService(
         profile.coffeeShopId = coffeeShopId
         profileRepository.save(profile)
 
-        return true
+        return Pair(currentEmail, UserIdentity(userId, profile.role, coffeeShopId))
     }
 }
