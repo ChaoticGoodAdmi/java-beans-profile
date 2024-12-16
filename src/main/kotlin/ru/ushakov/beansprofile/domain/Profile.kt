@@ -1,10 +1,15 @@
 package ru.ushakov.beansprofile.domain
 
 import jakarta.persistence.*
+import java.io.Serializable
 import java.time.LocalDate
 
 @Entity
-@Table(name = "profiles", uniqueConstraints = [UniqueConstraint(columnNames = ["email"])])
+@Table(
+    name = "profiles",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["email"])],
+    indexes = [Index(name = "idx_email", columnList = "email")]
+)
 data class Profile(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
@@ -17,7 +22,7 @@ data class Profile(
     val dateOfBirth: LocalDate = LocalDate.of(1970, 1, 1),
     var coffeeShopId: String? = null,
     val role: Role = Role.GUEST
-)
+) : Serializable
 
 enum class Role {
     GUEST, BARISTA

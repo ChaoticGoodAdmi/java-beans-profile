@@ -2,6 +2,7 @@ package ru.ushakov.beansprofile.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -63,8 +64,13 @@ class ProfileService(
             ?: throw Exception("Authenticated user not found")
         require(profile.id == userId) { "You are not authorized to modify this user" }
         profile.coffeeShopId = coffeeShopId
-        profileRepository.save(profile)
+        saveProfile(profile)
 
         return Pair(currentEmail, UserIdentity(userId, profile.role, coffeeShopId))
+    }
+
+    @CacheEvict(value = ["profiles"], key = "#profile.email")
+    fun saveProfile(profile: Profile) {
+        profileRepository.save(profile)
     }
 }
